@@ -47,12 +47,12 @@ class testDashboardProblemsWidget extends CWebTest {
 	 * because it can change.
 	 */
 	private $sql = 'SELECT wf.widgetid, wf.type, wf.name, wf.value_int, wf.value_str, wf.value_groupid, wf.value_hostid,'.
-			' wf.value_itemid, wf.value_graphid, wf.value_sysmapid, w.widgetid, w.dashboard_pageid, w.type, w.name, w.x, w.y,'.
-			' w.width, w.height'.
-			' FROM widget_field wf'.
-			' INNER JOIN widget w'.
-			' ON w.widgetid=wf.widgetid ORDER BY wf.widgetid, wf.name, wf.value_int, wf.value_str, wf.value_groupid,'.
-			' wf.value_itemid, wf.value_graphid, wf.value_hostid';
+		' wf.value_itemid, wf.value_graphid, wf.value_sysmapid, w.widgetid, w.dashboard_pageid, w.type, w.name, w.x, w.y,'.
+		' w.width, w.height'.
+		' FROM widget_field wf'.
+		' INNER JOIN widget w'.
+		' ON w.widgetid=wf.widgetid ORDER BY wf.widgetid, wf.name, wf.value_int, wf.value_str, wf.value_groupid,'.
+		' wf.value_itemid, wf.value_graphid, wf.value_hostid';
 
 	public function prepareDashboardData() {
 		$response = CDataHelper::call('dashboard.create', [
@@ -126,8 +126,8 @@ class testDashboardProblemsWidget extends CWebTest {
 		$form->fill(['Type' => 'Problems']);
 		$dialog->waitUntilReady();
 
-		$this->assertEquals(['Type', 'Name', 'Refresh interval', 'Show', 'Host groups', 'Exclude host groups', 'Hosts', 'Problem',
-				'Severity', 'Tags', 'Show tags', 'Tag name', 'Tag display priority', 'Show operational data', 'Show symptoms',
+		$this->assertEquals(['Type', 'Name', 'Refresh interval', 'Show', 'Host groups', 'Exclude host groups', 'Hosts',
+				'Problem', 'Severity', 'Tags', 'Show tags', 'Tag name', 'Tag display priority', 'Show operational data',
 				'Show suppressed problems', 'Show unacknowledged only', 'Sort entries by', 'Show timeline', 'Show lines'],
 				$form->getLabels()->asText()
 		);
@@ -161,7 +161,6 @@ class testDashboardProblemsWidget extends CWebTest {
 			'Tag name' => ['value' => 'Full', 'enabled' => false],
 			'Tag display priority' => ['value' => '', 'placeholder' => 'comma-separated list', 'enabled' => false, 'maxlength' => 255],
 			'Show operational data' => ['value' => 'None', 'enabled' => true],
-			'Show symptoms' => ['value' => false, 'enabled' => true],
 			'Show suppressed problems' => ['value' => false, 'enabled' => true],
 			'Show unacknowledged only' => ['value' => false, 'enabled' => true],
 			'Sort entries by' => ['value' => 'Time (descending)', 'enabled' => true],
@@ -386,7 +385,6 @@ class testDashboardProblemsWidget extends CWebTest {
 						'Show tags' => 2,
 						'Tag name' => 'None',
 						'Show operational data' => 'With problem name',
-						'Show symptoms' => true,
 						'Show suppressed problems' => true,
 						'Show unacknowledged only' => true,
 						'Sort entries by' => 'Problem (ascending)'
@@ -440,7 +438,7 @@ class testDashboardProblemsWidget extends CWebTest {
 					'tag_fields' => []
 				]
 			],
-			// #9 Cyrillyc and special symbols in inputs.
+			// #9 Cyrillic and special symbols in inputs.
 			[
 				[
 					'fields' => [
@@ -715,33 +713,33 @@ class testDashboardProblemsWidget extends CWebTest {
 
 		if ($cancel || !$save_dashboard) {
 			$form->fill([
-					'Name' => 'new name',
-					'Refresh interval' => '10 minutes',
-					'Host groups' => 'Empty group',
-					'Show' => 'Problems',
-					'Exclude host groups' => 'Group to copy graph',
-					'Hosts' => 'Available host',
-					'Problem' => 'Test problem',
-					'id:severities_3' => true,
-					'Show tags' => 2,
-					'Tag name' => 'None',
-					'Tag display priority' => 'one, two, four',
-					'Show operational data' => 'With problem name',
-					'Show suppressed problems' => true,
-					'Sort entries by' => 'Time (descending)',
-					'Show timeline' => false,
-					'Show lines' => 99
+				'Name' => 'new name',
+				'Refresh interval' => '10 minutes',
+				'Host groups' => 'Empty group',
+				'Show' => 'Problems',
+				'Exclude host groups' => 'Group to copy graph',
+				'Hosts' => 'Available host',
+				'Problem' => 'Test problem',
+				'id:severities_3' => true,
+				'Show tags' => 2,
+				'Tag name' => 'None',
+				'Tag display priority' => 'one, two, four',
+				'Show operational data' => 'With problem name',
+				'Show suppressed problems' => true,
+				'Sort entries by' => 'Time (descending)',
+				'Show timeline' => false,
+				'Show lines' => 99
 			]);
 
 			$form->getField('id:evaltype')->fill('Or');
 			$form->getField('id:tags_table_tags')->asMultifieldTable()->fill([
-					[
-						'action' => USER_ACTION_UPDATE,
-						'index' => 0,
-						'tag' => 'new tag',
-						'operator' => 'Does not equal',
-						'value' => 'new value'
-					]
+				[
+					'action' => USER_ACTION_UPDATE,
+					'index' => 0,
+					'tag' => 'new tag',
+					'operator' => 'Does not equal',
+					'value' => 'new value'
+				]
 			]);
 		}
 
@@ -797,4 +795,3 @@ class testDashboardProblemsWidget extends CWebTest {
 		));
 	}
 }
-

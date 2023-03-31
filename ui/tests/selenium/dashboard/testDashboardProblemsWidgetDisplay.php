@@ -63,64 +63,37 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 
 	public function prepareProblemsData() {
 		// Create hostgroup for hosts with items triggers.
-		$hostgroups = CDataHelper::call('hostgroup.create', [
-			['name' => 'Group for Problems Widgets'],
-			['name' => 'Group for Cause and Symptoms']
-		]);
+		$hostgroups = CDataHelper::call('hostgroup.create', [['name' => 'Group for Problems Widgets']]);
 		$this->assertArrayHasKey('groupids', $hostgroups);
-		$problem_groupid = $hostgroups['groupids'][0];
-		$symptoms_groupid = $hostgroups['groupids'][1];
+		$groupid = $hostgroups['groupids'][0];
 
 		// Create host for items and triggers.
 		$hosts = CDataHelper::call('host.create', [
-			[
-				'host' => 'Host for Problems Widgets',
-				'groups' => [['groupid' => $problem_groupid]]
-			],
-			[
-				'host' => 'Host for Cause and Symptoms',
-				'groups' => [['groupid' => $symptoms_groupid]]
-			]
+			'host' => 'Host for Problems Widgets',
+			'groups' => [['groupid' => $groupid]]
 		]);
 		$this->assertArrayHasKey('hostids', $hosts);
-		$problem_hostid = $hosts['hostids'][0];
-		$symptoms_hostid = $hosts['hostids'][1];
 
-		// Create items on previously created hosts.
-		$problem_item_names = ['float', 'char', 'log', 'unsigned', 'text'];
+		// Create items on previously created host.
+		$item_names = ['float', 'char', 'log', 'unsigned', 'text'];
 
-		$problem_items_data = [];
-		foreach ($problem_item_names as $i => $item) {
-			$problem_items_data[] = [
-				'hostid' => $problem_hostid,
+		$items_data = [];
+		foreach ($item_names as $i => $item) {
+			$items_data[] = [
+				'hostid' => $hosts['hostids'][0],
 				'name' => $item,
 				'key_' => $item,
-				'type' => ITEM_TYPE_TRAPPER,
+				'type' => 2,
 				'value_type' => $i
 			];
 		}
 
-		$problem_items = CDataHelper::call('item.create', $problem_items_data);
-		$this->assertArrayHasKey('itemids', $problem_items);
-		$problem_itemids = CDataHelper::getIds('name');
-
-		$symptoms_items_data = [];
-		foreach (['trap1', 'trap2', 'trap3'] as $i => $item) {
-			$symptoms_items_data[] = [
-				'hostid' => $symptoms_hostid,
-				'name' => $item,
-				'key_' => $item,
-				'type' => ITEM_TYPE_TRAPPER,
-				'value_type' => $i
-			];
-		}
-
-		$symptoms_items = CDataHelper::call('item.create', $symptoms_items_data);
-		$this->assertArrayHasKey('itemids', $symptoms_items);
-		$symptoms_itemids = CDataHelper::getIds('name');
+		$items = CDataHelper::call('item.create', $items_data);
+		$this->assertArrayHasKey('itemids', $items);
+		$itemids = CDataHelper::getIds('name');
 
 		// Create triggers based on items.
-		$problem_triggers = CDataHelper::call('trigger.create', [
+		$triggers = CDataHelper::call('trigger.create', [
 			[
 				'description' => 'Trigger for widget 1 float',
 				'expression' => 'last(/Host for Problems Widgets/float)=0',
@@ -150,67 +123,34 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 				'priority' => 4
 			]
 		]);
-		$this->assertArrayHasKey('triggerids', $problem_triggers);
-		$problem_triggerids = CDataHelper::getIds('description');
-
-		$symptoms_triggers = CDataHelper::call('trigger.create', [
-			[
-				'description' => 'Cause problem 1',
-				'expression' => 'last(/Host for Cause and Symptoms/trap1)=0',
-				'priority' => 0
-			],
-			[
-				'description' => 'Symptom problem 2',
-				'expression' => 'last(/Host for Cause and Symptoms/trap2)=0',
-				'priority' => 1
-			],
-			[
-				'description' => 'Symptom problem 3',
-				'expression' => 'last(/Host for Cause and Symptoms/trap3)=0',
-				'priority' => 2
-			]
-		]);
-		$this->assertArrayHasKey('triggerids', $symptoms_triggers);
-		$symptoms_triggerids = CDataHelper::getIds('description');
+		$this->assertArrayHasKey('triggerids', $triggers);
+		$triggerids = CDataHelper::getIds('description');
 
 		// Create events and problems.
 		self::$time = time();
 
-		foreach (array_values($problem_itemids) as $itemid) {
-			CDataHelper::addItemData($itemid, 0);
-		}
-
-		foreach (array_values($symptoms_itemids) as $itemid) {
+		foreach (array_values($itemids) as $itemid) {
 			CDataHelper::addItemData($itemid, 0);
 		}
 
 		$i = 0;
-		foreach ($problem_triggerids as $name => $id) {
+		foreach ($triggerids as $name => $id) {
+			// Create events.
 			DBexecute('INSERT INTO events (eventid, source, object, objectid, clock, ns, value, name, severity) VALUES ('.
-					(1009950 + $i).', 0, 0, '.zbx_dbstr($id).', '.self::$time.', 0, 1, '.zbx_dbstr($name).', '.zbx_dbstr($i).')'
+					(1009950 + $i).', 0, 0, '.zbx_dbstr($id).', '.zbx_dbstr(self::$time).', 0, 1, '.zbx_dbstr($name).', '.zbx_dbstr($i).')'
 			);
+
+			// Create problems.
 			DBexecute('INSERT INTO problem (eventid, source, object, objectid, clock, ns, name, severity) VALUES ('.
-					(1009950 + $i).', 0, 0, '.zbx_dbstr($id).', '.self::$time.', 0, '.zbx_dbstr($name).', '.zbx_dbstr($i).')'
+					(1009950 + $i).', 0, 0, '.zbx_dbstr($id).', '.zbx_dbstr(self::$time).', 0, '.zbx_dbstr($name).', '.zbx_dbstr($i).')'
 			);
 			$i++;
-		}
-
-		$j = 0;
-		foreach ($symptoms_triggerids as $name => $id) {
-			DBexecute('INSERT INTO events (eventid, source, object, objectid, clock, ns, value, name, severity) VALUES ('.
-					(1009850 + $j).', 0, 0, '.zbx_dbstr($id).', '.self::$time.', 0, 1, '.zbx_dbstr($name).', '.zbx_dbstr($j).')'
-			);
-			DBexecute('INSERT INTO problem (eventid, source, object, objectid, clock, ns, name, severity) VALUES ('.
-					(1009850 + $j).', 0, 0, '.zbx_dbstr($id).', '.self::$time.', 0, '.zbx_dbstr($name).', '.zbx_dbstr($j).')'
-			);
-			$j++;
 		}
 
 		// Change triggers' state to Problem.
 		DBexecute('UPDATE triggers SET value = 1 WHERE description IN ('.zbx_dbstr('Trigger for widget 1 float').', '.
 				zbx_dbstr('Trigger for widget 2 log').', '.zbx_dbstr('Trigger for widget 2 unsigned').', '.
-				zbx_dbstr('Trigger for widget text').', '.zbx_dbstr('Cause problem 1').', '.
-				zbx_dbstr('Symptom problem 2').', '.zbx_dbstr('Symptom problem 3').')'
+				zbx_dbstr('Trigger for widget text').')'
 		);
 
 		// Manual close is true for the problem: Trigger for widget 1 char.
@@ -218,16 +158,9 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 				zbx_dbstr('Trigger for widget 1 char')
 		);
 
-		// Set cause and symptoms.
-		DBexecute('UPDATE problem SET cause_eventid = 1009850 WHERE name IN ('.zbx_dbstr('Symptom problem 2').', '.
-				zbx_dbstr('Symptom problem 3').')'
-		);
-		DBexecute('INSERT INTO event_symptom (eventid, cause_eventid) VALUES (1009851, 1009850)');
-		DBexecute('INSERT INTO event_symptom (eventid, cause_eventid) VALUES (1009852, 1009850)');
-
 		// Suppress the problem: 'Trigger for widget text'.
-		DBexecute('INSERT INTO event_suppress (event_suppressid, eventid, maintenanceid, suppress_until) VALUES '.
-				'(100990, 1009954, NULL, 0)'
+		DBexecute('INSERT INTO event_suppress (event_suppressid, eventid, maintenanceid, suppress_until)'.
+				'VALUES (100990, 1009954, NULL, 0)'
 		);
 
 		// Acknowledge the problem: 'Trigger for widget 2 unsigned' and get acknowledge time.
@@ -261,35 +194,45 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 					],
 					'actions' => [
 						'Trigger for widget 2 unsigned' => [
-							// Green tick.
-							'icon-action-ack-green' => true,
-
-							// Message bubble.
-							'icon-action-msgs' => [
+							// Green link Yes.
+							'Ack' => [
 								[
-									'Time' => 'acknowledged',
-									'User' => 'Admin (Zabbix Administrator)',
-									'Message' => 'Acknowledged event'
+									'selector' => 'green link-alt'
 								]
 							],
-
-							// Actions arrow icon.
-							'icon-actions-number-gray' => [
+							'Actions' => [
+								// Message bubble.
 								[
-									'Time' => 'acknowledged',
-									'User/Recipient' => 'Admin (Zabbix Administrator)',
-									'Action' => '',
-									'Message/Command' => 'Acknowledged event',
-									'Status' => '',
-									'Info' => ''
+									'selector' => 'icon-action-msgs',
+									'actions' => [
+										[
+											'Time' => 'acknowledged',
+											'User' => 'Admin (Zabbix Administrator)',
+											'Message' => 'Acknowledged event'
+										]
+									]
 								],
+								// Actions arrow icon.
 								[
-									'Time' => 'created',
-									'User/Recipient' => '',
-									'Action' => '',
-									'Message/Command' => '',
-									'Status' => '',
-									'Info' => ''
+									'selector' => 'icon-actions-number-gray',
+									'actions' => [
+										[
+											'Time' => 'acknowledged',
+											'User/Recipient' => 'Admin (Zabbix Administrator)',
+											'Action' => '',
+											'Message/Command' => 'Acknowledged event',
+											'Status' => '',
+											'Info' => ''
+										],
+										[
+											'Time' => 'created',
+											'User/Recipient' => '',
+											'Action' => '',
+											'Message/Command' => '',
+											'Status' => '',
+											'Info' => ''
+										]
+									]
 								]
 							]
 						]
@@ -347,7 +290,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						['Problem • Severity' => 'Trigger for widget 2 log'],
 						['Problem • Severity' => 'Trigger for widget 2 unsigned']
 					],
-					'headers' => ['Time', 'Info', 'Host', 'Problem • Severity', 'Duration', 'Update', 'Actions']
+					'headers' => ['Time', 'Info', 'Host', 'Problem • Severity', 'Duration', 'Ack', 'Actions']
 				]
 			],
 			// #4 Filtered by Host, Sort by severity.
@@ -365,7 +308,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						['Problem • Severity' => 'Trigger for widget 2 unsigned']
 					],
 					'headers' => ['Time', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity', 'Duration',
-							'Update', 'Actions'
+							'Ack', 'Actions'
 					]
 				]
 			],
@@ -394,8 +337,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 							'Zabbix servers',
 							'Group to check triggers filtering',
 							'Another group to check Overview',
-							'Group to check Overview',
-							'Group for Cause and Symptoms'
+							'Group to check Overview'
 						]
 					],
 					'result' => [
@@ -422,7 +364,8 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 							'Info' => '',
 							'Host' => 'Host for Problems Widgets',
 							'Problem • Severity' => 'Trigger for widget 2 log',
-							'Update' => 'Update'
+							'Ack' => 'No',
+							'Actions' => ''
 						],
 						[
 							'Time' => true,
@@ -431,7 +374,8 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 							'Info' => '',
 							'Host' => 'Host for Problems Widgets',
 							'Problem • Severity' => 'Trigger for widget 1 float',
-							'Update' => 'Update'
+							'Ack' => 'No',
+							'Actions' => ''
 						]
 					]
 				]
@@ -466,7 +410,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						]
 					],
 					'headers' => ['Time', '', '', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity',
-							'Duration', 'Update', 'Actions', 'Tags'
+							'Duration', 'Ack', 'Actions', 'Tags'
 					]
 				]
 			],
@@ -504,7 +448,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						'Second test trigger with tag priority' => 'Beta: bEpsilon: eEta: eZeta: z'
 					],
 					'headers' => ['Time', '', '', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity',
-							'Duration', 'Update', 'Actions', 'Tags'
+							'Duration', 'Ack', 'Actions', 'Tags'
 					]
 				]
 			],
@@ -550,7 +494,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						]
 					],
 					'headers' => ['Time', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity', 'Duration',
-							'Update', 'Actions', 'Tags'
+							'Ack', 'Actions', 'Tags'
 					]
 				]
 			],
@@ -588,7 +532,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						]
 					],
 					'headers' => ['Time', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity', 'Duration',
-							'Update', 'Actions', 'Tags'
+							'Ack', 'Actions', 'Tags'
 					]
 				]
 			],
@@ -625,7 +569,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 						]
 					],
 					'headers' => ['Time', '', '', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity',
-							'Operational data', 'Duration', 'Update', 'Actions'
+							'Operational data', 'Duration', 'Ack', 'Actions'
 					]
 				]
 			],
@@ -660,45 +604,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 					'stats' => '2 of 4 problems are shown'
 				]
 			],
-			// #15 Filtered by Host group, show symptoms = false.
-			[
-				[
-					'fields' => [
-						'Name' => 'Host group, show symptoms = false',
-						'Host groups' => 'Group for Cause and Symptoms',
-						'Show symptoms' => false
-					],
-					'result' => [
-						['Problem • Severity' => 'Cause problem 1'],
-						['Problem • Severity' => 'Symptom problem 3'],
-						['Problem • Severity' => 'Symptom problem 2']
-					],
-					'headers' => ['', '', 'Time', '', '', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity',
-							'Duration', 'Update', 'Actions'
-					]
-				]
-			],
-			// #16 Filtered by Host group, show symptoms = true.
-			[
-				[
-					'fields' => [
-						'Name' => 'Host group, show symptoms = true',
-						'Host groups' => 'Group for Cause and Symptoms',
-						'Show symptoms' => true
-					],
-					'result' => [
-						['Problem • Severity' => 'Symptom problem 3'],
-						['Problem • Severity' => 'Symptom problem 2'],
-						['Problem • Severity' => 'Cause problem 1'],
-						['Problem • Severity' => 'Symptom problem 3'],
-						['Problem • Severity' => 'Symptom problem 2']
-					],
-					'headers' => ['', '', 'Time', '', '', 'Recovery time', 'Status', 'Info', 'Host', 'Problem • Severity',
-							'Duration', 'Update', 'Actions'
-					]
-				]
-			],
-			// #17 Filtered so there is no data in result.
+			// #15 Filtered so there is no data in result.
 			[
 				[
 					'fields' => [
@@ -708,7 +614,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 					'result' => []
 				]
 			],
-			// #18 Filtered by the same include/exclude group.
+			// #16 Filtered by the same include/exclude group.
 			[
 				[
 					'fields' => [
@@ -750,7 +656,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 		$this->assertMessage(TEST_GOOD, 'Dashboard updated');
 
 		// Assert Problems widget's table.
-		$dashboard->getWidget($data['fields']['Name'])->waitUntilReady();
+		$dashboard->getWidget($data['fields']['Name']);
 		$table = $this->query('class:list-table')->asTable()->one();
 
 		// Change time for actual value, because it cannot be used in data provider.
@@ -763,29 +669,32 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 
 		// Check clicks on Acknowledge and Actions icons and hints' contents.
 		if (CTestArrayHelper::get($data, 'actions')) {
-			foreach ($data['actions'] as $problem => $action) {
-				$action_cell = $table->findRow('Problem • Severity', $problem)->getColumn('Actions');
+			foreach ($data['actions'] as $problem => $columns) {
+				foreach ($columns as $column => $actions) {
+					$action_cell = $table->findRow('Problem • Severity', $problem)->getColumn($column);
 
-				foreach ($action as $class => $hint_rows) {
-					$icon = $action_cell->query('xpath:.//*['.CXPathHelper::fromClass($class).']')->one();
-					$this->assertTrue($icon->isVisible());
-
-					if ($class !== 'icon-action-ack-green') {
-						// Click on icon and open hint.
-						$icon->click();
-						$hint = $this->query('xpath://div[@class="overlay-dialogue"]')->asOverlayDialog()
+					foreach ($actions as $icon) {
+						$button = $action_cell->query('xpath:.//*['.CXPathHelper::fromClass($icon['selector']).']')
 								->waitUntilVisible()->one();
-						$hint_table = $hint->query('class:list-table')->asTable()->one();
+						$this->assertTrue($button->isClickable());
 
-						// Check rows in hint's table.
-						foreach ($hint_table->getRows() as $i => $row) {
-							$hint_rows[$i]['Time'] = ($hint_rows[$i]['Time'] === 'acknowledged')
-								? date('Y-m-d H:i:s', self::$acktime)
-								: date('Y-m-d H:i:s', self::$time);
-							$row->assertValues($hint_rows[$i]);
+						if ($icon['selector'] !== 'green link-alt') {
+							// Click on icon and open hint.
+							$button->click();
+							$hint = $this->query('xpath://div[@class="overlay-dialogue"]')->asOverlayDialog()
+								->waitUntilVisible()->one();
+							$hint_table = $hint->query('class:list-table')->asTable()->one();
+
+							// Check rows in hint's table.
+							foreach ($hint_table->getRows() as $i => $row) {
+								$icon['actions'][$i]['Time'] = ($icon['actions'][$i]['Time'] === 'acknowledged')
+									? date('Y-m-d H:i:s', self::$acktime)
+									: date('Y-m-d H:i:s', self::$time);
+								$row->assertValues($icon['actions'][$i]);
+							}
+
+							$hint->close();
 						}
-
-						$hint->close();
 					}
 				}
 			}
@@ -815,7 +724,7 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 
 		// Assert table headers depending on widget settings.
 		$headers = (CTestArrayHelper::get($data, 'headers', ['Time', '', '', 'Recovery time', 'Status', 'Info',
-				'Host', 'Problem • Severity', 'Duration', 'Update', 'Actions']
+				'Host', 'Problem • Severity', 'Duration', 'Ack', 'Actions']
 		));
 		$this->assertEquals($headers, $table->getHeadersText());
 
@@ -850,8 +759,8 @@ class testDashboardProblemsWidgetDisplay extends CWebTest {
 		DBexecute('DELETE FROM widget'.
 				' WHERE dashboard_pageid'.
 				' IN (SELECT dashboard_pageid'.
-					' FROM dashboard_page'.
-					' WHERE dashboardid='.self::$dashboardid.
+						' FROM dashboard_page'.
+						' WHERE dashboardid='.self::$dashboardid.
 				')'
 		);
 	}
