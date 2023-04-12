@@ -134,12 +134,15 @@ define('ZBX_FONT_NAME', 'DejaVuSans');
 
 define('ZBX_AUTH_INTERNAL',	0);
 define('ZBX_AUTH_LDAP',		1);
+define('ZBX_AUTH_KEYCLOAK',	2);
 define('ZBX_AUTH_HTTP_DISABLED',	0);
 define('ZBX_AUTH_HTTP_ENABLED',		1);
 define('ZBX_AUTH_LDAP_DISABLED',	0);
 define('ZBX_AUTH_LDAP_ENABLED',		1);
 define('ZBX_AUTH_SAML_DISABLED',	0);
 define('ZBX_AUTH_SAML_ENABLED',		1);
+define('ZBX_AUTH_KEYCLOAK_DISABLED',	0);
+define('ZBX_AUTH_KEYCLOAK_ENABLED',	1);
 define('ZBX_AUTH_FORM_ZABBIX',	0);
 define('ZBX_AUTH_FORM_HTTP',	1);
 define('ZBX_AUTH_CASE_INSENSITIVE',	0);
