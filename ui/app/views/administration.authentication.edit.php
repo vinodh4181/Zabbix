@@ -232,18 +232,34 @@ $keycloak_tab = (new CFormList('list_keycloak'))
 				->setUncheckedValue(ZBX_AUTH_KEYCLOAK_DISABLED)
 	)
 	->addRow((new CLabel(_('KeyCloak Auth URL'), 'keycloak_auth_url'))->setAsteriskMark(),
-		(new CTextBox('keycloak_auth_url', $data['saml_sso_url'], false, DB::getFieldLength('config', 'saml_sso_url')))
-			->setEnabled($data['saml_enabled'])
+		(new CTextBox('keycloak_auth_url', $data['keycloak_auth_url'], false, DB::getFieldLength('config', 'keycloak_auth_url')))
+			->setEnabled($data['keycloak_enabled'])
 			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
 			->setAriaRequired()
 	)
-	->addRow(new CLabel(_('KeyCloak Realm'), 'keycloak_realm_format'),
-		(new CTextBox('keycloak_realm_format', $data['saml_nameid_format'], false,
-			DB::getFieldLength('config', 'saml_nameid_format')
-		))
-			->setEnabled($data['saml_enabled'])
+	->addRow(new CLabel(_('KeyCloak Realm'), 'keycloak_realm')),
+		(new CTextBox('keycloak_realm', $data['keycloak_realm'], false, DB::getFieldLength('config', 'keycloak_realm')))
+			->setEnabled($data['keycloak_enabled'])
 			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
-			->setAttribute('placeholder', 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
+		 	->setAriaRequired()
+	)
+	->addRow(new CLabel(_('KeyCloak Client ID'), 'keycloak_clientid'))->setAsteriskMark(),
+		(new CTextBox('keycloak_clientid', $data['keycloak_clientid'], false, DB::getFieldLength('config', 'keycloak_clientid')))
+			->setEnabled($data['keycloak_enabled'])
+			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
+		 	->setAriaRequired()
+	)
+	->addRow(new CLabel(_('KeyCloak Client Secret'), 'keycloak_client_secret'))->setAsteriskMark(),
+		(new CTextBox('keycloak_client_secret', $data['keycloak_client_secret'], false, DB::getFieldLength('config', 'keycloak_client_secret')))
+			->setEnabled($data['keycloak_enabled'])
+			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
+		 	->setAriaRequired()
+	)
+	->addRow(new CLabel(_('KeyCloak Client Scope'), 'keycloak_client_scope')),
+		(new CTextBox('keycloak_client_scope', $data['keycloak_client_scope'], false, DB::getFieldLength('config', 'keycloak_client_scope')))
+			->setEnabled($data['keycloak_enabled'])
+			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
+		 	->setAriaRequired()
 	);
 
 // SAML authentication fields.
@@ -256,9 +272,7 @@ $saml_tab = (new CFormList('list_saml'))
 				->setUncheckedValue(ZBX_AUTH_SAML_DISABLED)
 	)
 	->addRow((new CLabel(_('IdP entity ID'), 'saml_idp_entityid'))->setAsteriskMark(),
-		(new CTextBox('saml_idp_entityid', $data['saml_idp_entityid'], false,
-			DB::getFieldLength('config', 'saml_idp_entityid')
-		))
+		(new CTextBox('saml_idp_entityid', $data['saml_idp_entityid'], false,DB::getFieldLength('config', 'saml_idp_entityid')))
 			->setEnabled($data['saml_enabled'])
 			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
 			->setAriaRequired()
