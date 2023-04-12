@@ -32,6 +32,7 @@ $auth_tab = (new CFormList('list_auth'))
 			->setAttribute('autofocus', 'autofocus')
 			->addValue(_x('Internal', 'authentication'), ZBX_AUTH_INTERNAL)
 			->addValue(_('LDAP'), ZBX_AUTH_LDAP)
+		 	->addValue(_('KEYCLOAK'), ZBX_AUTH_KEYCLOAK)
 			->setModern(true)
 			->removeId()
 	)
@@ -221,6 +222,30 @@ $ldap_tab = (new CFormList('list_ldap'))
 			->setAriaRequired()
 	);
 
+// KEYCLOAK authentication fields.
+$keycloak_tab = (new CFormList('list_keycloak'))
+	->addRow(new CLabel(_('Enable KEYCLOAK authentication'), 'keycloak_auth_enabled'),
+		$data['saml_error']
+			? (new CLabel($data['saml_error']))->addClass(ZBX_STYLE_RED)
+			: (new CCheckBox('keycloak_auth_enabled', ZBX_AUTH_KEYCLOAK_ENABLED))
+				->setChecked($data['saml_auth_enabled'] == ZBX_AUTH_KEYCLOAK_ENABLED)
+				->setUncheckedValue(ZBX_AUTH_KEYCLOAK_DISABLED)
+	)
+	->addRow((new CLabel(_('KeyCloak Auth URL'), 'keycloak_auth_url'))->setAsteriskMark(),
+		(new CTextBox('keycloak_auth_url', $data['saml_sso_url'], false, DB::getFieldLength('config', 'saml_sso_url')))
+			->setEnabled($data['saml_enabled'])
+			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
+			->setAriaRequired()
+	)
+	->addRow(new CLabel(_('KeyCloak Realm'), 'keycloak_realm_format'),
+		(new CTextBox('keycloak_realm_format', $data['saml_nameid_format'], false,
+			DB::getFieldLength('config', 'saml_nameid_format')
+		))
+			->setEnabled($data['saml_enabled'])
+			->setWidth(ZBX_TEXTAREA_STANDARD_WIDTH)
+			->setAttribute('placeholder', 'urn:oasis:names:tc:SAML:2.0:nameid-format:transient')
+	);
+
 // SAML authentication fields.
 $saml_tab = (new CFormList('list_saml'))
 	->addRow(new CLabel(_('Enable SAML authentication'), 'saml_auth_enabled'),
@@ -348,6 +373,7 @@ $selected_tab = $data['form_refresh'] != 0 ? CCookieHelper::get('tab') : 0;
 			->addTab('http', _('HTTP settings'), $http_tab, TAB_INDICATOR_AUTH_HTTP)
 			->addTab('ldap', _('LDAP settings'), $ldap_tab, TAB_INDICATOR_AUTH_LDAP)
 			->addTab('saml', _('SAML settings'), $saml_tab, TAB_INDICATOR_AUTH_SAML)
+			->addTab('keycloak', _('KEYCLOAK settings'), $keycloak_tab, TAB_INDICATOR_AUTH_SAML)
 			->setFooter(makeFormFooter(
 				(new CSubmit('update', _('Update'))),
 				[(new CSubmitButton(_('Test'), 'ldap_test', 1))
